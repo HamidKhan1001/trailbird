@@ -19,7 +19,8 @@
 | `errors.py` | `TrailbirdError` hierarchy; messages are user-safe |
 
 ## Decisions
-- **BirdNET** for coverage (~6k species). Trade-off: weights are CC BY-NC-SA 4.0, so non-commercial. The `Predictor` protocol makes swapping in a permissive model (e.g. an Apache-2.0 HF classifier) a one-file change.
+- **BirdNET+ V3.0 preview (ONNX)** for coverage (~11.5k species). v2.4 has no ONNX backend in the `birdnet` package and its weights are non-commercial (CC BY-NC-SA); V3.0 preview is CC BY-SA 4.0 with a no-poaching/no-military use clause. Trade-off: it is a developer preview, and the FP16 ONNX file is ~270 MB. The `Predictor` protocol makes swapping in a permissive model (e.g. an Apache-2.0 HF classifier) a one-file change.
 - **Uncertainty rule:** top score < 0.50, or lead over runner-up < 0.10. Tunable in `results.py`.
 - **Model download is the only network step**, done once before inference; inference runs with sockets blocked.
+- **Offline guard scope:** `block_network()` is in-process; BirdNET's workers are separate processes, so we pin `n_workers=1` and recommend an OS-level sandbox for a hard guarantee.
 - **Dependency injection** keeps tests fast and model-free.

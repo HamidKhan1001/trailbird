@@ -29,3 +29,16 @@ def test_model_load_failure_exit_code_2(wav_path, capsys):
 
     assert main(["identify", str(wav_path)], predictor_factory=boom) == 2
     assert "model missing" in capsys.readouterr().err
+
+
+def test_fetch_model_success(capsys):
+    assert main(["fetch-model"], predictor_factory=lambda: FakePredictor()) == 0
+    assert "offline" in capsys.readouterr().out
+
+
+def test_fetch_model_failure(capsys):
+    def boom():
+        raise ModelError("no network")
+
+    assert main(["fetch-model"], predictor_factory=boom) == 2
+    assert "no network" in capsys.readouterr().err

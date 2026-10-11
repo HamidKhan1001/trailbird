@@ -78,3 +78,34 @@ def test_inference_runs_with_network_blocked(wav_path):
 def test_allow_network_flag_disables_guard(wav_path):
     out = Identifier(FakePredictor([Prediction("A", "A a", 0.9)]), enforce_offline=False)
     assert out.identify(wav_path).predictions
+
+
+def test_birdnet_predictor_construction_does_not_load_model():
+    from trailbird.predictor import BirdNETPredictor
+
+    assert BirdNETPredictor()._model is None  # no download/side effects on construction
+
+
+def test_model_loads_before_network_is_blocked(wav_path):
+    import socket
+
+    seen = {}
+
+    class Probe(FakePredictor):
+        def load(self):
+            seen["blocked_during_load"] = socket.socket.connect.__name__ == "_guarded_connect"
+
+    Identifier(Probe([Prediction("A", "A a", 0.9)])).identify(wav_path)
+    assert seen["blocked_during_load"] is False
+
+
+def test_invalid_input_does_not_trigger_model_load(tmp_path):
+    loaded = []
+
+    class Probe(FakePredictor):
+        def load(self):
+            loaded.append(1)
+
+    with pytest.raises(AudioError):
+        Identifier(Probe()).identify(tmp_path / "missing.wav")
+    assert loaded == []

@@ -57,6 +57,7 @@ class Identifier:
     def identify(self, audio_path: str | Path | None) -> Identification:
         load_audio(audio_path)  # fail fast with a friendly AudioError before touching the model
         assert audio_path is not None
+        self._predictor.load()  # may download once; must happen before the network is blocked
         if self._enforce_offline:
             with block_network():
                 raw = self._predictor.predict(audio_path, k=self._k)

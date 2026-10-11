@@ -13,6 +13,9 @@ class FakePredictor:
         self.raises = raises
         self.calls = []
 
+    def load(self):
+        pass
+
     def predict(self, audio_path, k=3):
         self.calls.append((str(audio_path), k))
         if self.raises:

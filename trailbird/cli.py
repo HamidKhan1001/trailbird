@@ -16,6 +16,7 @@ from .service import Identifier
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="trailbird", description="Offline bird-call identifier.")
     sub = p.add_subparsers(dest="command", required=True)
+    sub.add_parser("fetch-model", help="Download the model once (the only step that needs internet).")
     ident = sub.add_parser("identify", help="Identify the bird in an audio file.")
     ident.add_argument("audio", help="Path to a wav/flac/ogg/mp3 file.")
     ident.add_argument("--json", action="store_true", help="Machine-readable output.")
@@ -30,6 +31,14 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: Sequence[str] | None = None, predictor_factory=BirdNETPredictor) -> int:
     args = build_parser().parse_args(argv)
+    if args.command == "fetch-model":
+        try:
+            predictor_factory().load()
+        except TrailbirdError as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 2
+        print("Model ready. From now on TrailBird runs fully offline.")
+        return 0
     try:
         identifier = Identifier(
             predictor_factory(),
