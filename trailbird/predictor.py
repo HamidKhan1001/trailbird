@@ -5,11 +5,8 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Protocol
 
+from .errors import ModelError
 from .results import Prediction, top_k
-
-
-class ModelError(RuntimeError):
-    """Raised when the model is missing or fails to load/run."""
 
 
 class Predictor(Protocol):

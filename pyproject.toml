@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "trailbird"
+version = "0.1.0"
+description = "Offline, privacy-preserving bird-call identifier (BirdNET + Gradio)."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = [
+  "birdnet[onnx]>=1.1.1",
+  "numpy",
+  "scipy",
+  "soundfile",
+]
+
+[project.optional-dependencies]
+ui = ["gradio>=4.44"]
+dev = ["pytest", "pytest-cov", "ruff", "mypy"]
+
+[project.scripts]
+trailbird = "trailbird.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["trailbird*"]
+
+[tool.setuptools.package-data]
+trailbird = ["data/*.json"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true

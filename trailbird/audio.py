@@ -7,13 +7,12 @@ import numpy as np
 import soundfile as sf
 from scipy.signal import resample_poly
 
+from .errors import AudioError
+
 SAMPLE_RATE = 48_000  # BirdNET input rate
 CHUNK_SECONDS = 3.0
 SUPPORTED = {".wav", ".flac", ".ogg", ".mp3"}
-
-
-class AudioError(ValueError):
-    """Raised for missing, unsupported, or unreadable audio."""
+MAX_SECONDS = 600  # reject clips over 10 minutes to keep memory bounded
 
 
 def load_audio(path: str | Path, sr: int = SAMPLE_RATE) -> np.ndarray:
@@ -33,6 +32,8 @@ def load_audio(path: str | Path, sr: int = SAMPLE_RATE) -> np.ndarray:
         raise AudioError(f"Could not decode '{p.name}': {exc}") from exc
     if data.size == 0:
         raise AudioError(f"'{p.name}' contains no audio.")
+    if data.shape[0] / orig_sr > MAX_SECONDS:
+        raise AudioError(f"'{p.name}' is longer than {MAX_SECONDS // 60} minutes. Trim it first.")
     mono = data.mean(axis=1)
     if orig_sr != sr:
         g = np.gcd(int(orig_sr), int(sr))

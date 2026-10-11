@@ -7,33 +7,29 @@ os.environ.setdefault("GRADIO_ANALYTICS_ENABLED", "False")
 
 import gradio as gr  # noqa: E402
 
-from trailbird.audio import AudioError, load_audio  # noqa: E402
-from trailbird.notes import GENERIC, load_notes  # noqa: E402
-from trailbird.predictor import BirdNETPredictor, ModelError, Predictor  # noqa: E402
-from trailbird.results import DISCLAIMER, format_markdown  # noqa: E402
+from trailbird.errors import TrailbirdError  # noqa: E402
+from trailbird.notes import load_notes  # noqa: E402
+from trailbird.predictor import BirdNETPredictor  # noqa: E402
+from trailbird.results import DISCLAIMER  # noqa: E402
+from trailbird.service import Identifier  # noqa: E402
 
-_predictor: Predictor | None = None
-_notes = load_notes()
+_identifier: Identifier | None = None
 
 
 def identify(audio_path: str | None) -> str:
-    global _predictor
+    """Lazy-load the model on first use so the page opens instantly."""
+    global _identifier
     try:
-        load_audio(audio_path)  # validate format and content before touching the model
-        if _predictor is None:
-            _predictor = BirdNETPredictor()
-        preds = _predictor.predict(audio_path, k=3)
-    except (AudioError, ModelError) as exc:
+        if _identifier is None:
+            _identifier = Identifier(BirdNETPredictor(), load_notes())
+    except TrailbirdError as exc:
         return f"❌ **{exc}**"
-    notes = dict(_notes)
-    if preds:
-        notes.setdefault(preds[0].scientific_name, GENERIC)
-    return format_markdown(preds, notes)
+    return _identifier.identify_markdown(audio_path)
 
 
 def build() -> gr.Blocks:
     with gr.Blocks(title="TrailBird") as demo:
-        gr.Markdown("# 🐦 TrailBird: offline bird-call identifier\n" f"_{DISCLAIMER}_")
+        gr.Markdown(f"# 🐦 TrailBird: offline bird-call identifier\n_{DISCLAIMER}_")
         audio = gr.Audio(sources=["upload", "microphone"], type="filepath", label="Bird sound")
         btn = gr.Button("Identify", variant="primary")
         out = gr.Markdown()
